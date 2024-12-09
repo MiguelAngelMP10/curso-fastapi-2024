@@ -22,13 +22,13 @@ class Customer(CustomerBase, table=True):
 
 
 class Transaction(BaseModel):
-    id: int
+    id: int | None = Field(default=None, primary_key=True)
     amount: int
-    description: str
+    description: str | None = Field(default=None)
 
 
 class Invoice(BaseModel):
-    id: int
+    id: int | None = Field(default=None, primary_key=True)
     customer: Customer
     transactions: list[Transaction]
     total: int

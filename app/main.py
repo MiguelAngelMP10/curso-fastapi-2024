@@ -1,13 +1,13 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from pydantic import EmailStr, AnyUrl
-
-from models import Customer, CustomerCreate, CustomerUpdate, Transaction, Invoice
-from db import SessionDep, create_all_tables
-from sqlmodel import select
+from pydantic import  AnyUrl
+from models import  Transaction, Invoice
+from db import create_all_tables
 from fastapi.openapi.models import Contact, License
+
+from .routers import customers
 
 app = FastAPI(
     title="Mi API de Ejemplo",
@@ -17,8 +17,10 @@ app = FastAPI(
     redoc_url="/redoc",  # URL donde estará la documentación ReDoc
     contact=Contact(name="Miguel Ángel Muñoz Pozos", email="mmunozpozos@gmail.com"),
     license=License(name="MIT", url=AnyUrl("https://opensource.org/licenses/MIT")),
-    lifespan=create_all_tables
+    lifespan=create_all_tables,
 )
+
+app.include_router(customers.router)
 
 countries = {
     "MX": {"iso_code": "MX", "time_zone": "America/Mexico_City"},
@@ -84,63 +86,6 @@ async def time(iso_code: str):
     hour_actually = datetime.now(ZoneInfo(time_zone)).strftime("%Y-%m-%d %H:%M:%S")
     return {"time": hour_actually}
 
-
-@app.post("/customers", response_model=Customer, tags=["Customers"])
-async def create_customer(customer_data: CustomerCreate, session: SessionDep):
-    customer = Customer.model_validate(customer_data.model_dump())
-    session.add(customer)
-    session.commit()
-    session.refresh(customer)
-    return customer
-
-
-@app.get("/customers/{customer_id}", response_model=Customer, tags=["Customers"])
-async def read_customer(customer_id: int, session: SessionDep):
-    customer_db = session.get(Customer, customer_id)
-    if not customer_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Customer doesn't exits"
-        )
-    return customer_db
-
-
-@app.patch(
-    "/customers/{customer_id}",
-    response_model=Customer,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Customers"],
-)
-async def read_customer(
-        customer_id: int, customer_data: CustomerUpdate, session: SessionDep
-):
-    customer_db = session.get(Customer, customer_id)
-    if not customer_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Customer doesn't exits"
-        )
-    customer_data_dict = customer_data.model_dump(exclude_unset=True)
-    customer_db.sqlmodel_update(customer_data_dict)
-    session.add(customer_db)
-    session.commit()
-    session.refresh(customer_db)
-    return customer_db
-
-
-@app.delete("/customers/{customer_id}", tags=["Customers"])
-async def delete_customer(customer_id: int, session: SessionDep):
-    customer_db = session.get(Customer, customer_id)
-    if not customer_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Customer doesn't exits"
-        )
-    session.delete(customer_db)
-    session.commit()
-    return {"detail": "ok"}
-
-
-@app.get("/customers", response_model=list[Customer], tags=["Customers"])
-async def list_customer(session: SessionDep):
-    return session.exec(select(Customer)).all()
 
 
 @app.post('/transactions')
