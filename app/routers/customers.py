@@ -1,5 +1,6 @@
-from fastapi import HTTPException, APIRouter, status
-from models import Customer, CustomerCreate, CustomerUpdate, Plan, CustomerPlan
+from certifi import where
+from fastapi import HTTPException, APIRouter, status, Query
+from models import Customer, CustomerCreate, CustomerUpdate, Plan, CustomerPlan, StatusEnum
 from db import SessionDep
 from sqlmodel import select
 
@@ -65,14 +66,23 @@ async def list_customer(session: SessionDep):
 
 
 @router.post("/customers/{customer_id}/plans/{plan_id}", tags=["Customers"])
-async def subscribe_customer_to_plan(customer_id: int, plan_id: int, session: SessionDep):
+async def subscribe_customer_to_plan(
+        customer_id: int,
+        plan_id: int,
+        session: SessionDep,
+        plan_status: StatusEnum = Query()
+):
     customer_db = session.get(Customer, customer_id)
     plan_db = session.get(Plan, plan_id)
 
     if not customer_db or not plan_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer or plan doesn't exits")
 
-    customer_plan_db = CustomerPlan(plan_id=plan_db.id, customer_id=customer_db.id, )
+    customer_plan_db = CustomerPlan(
+        plan_id=plan_db.id,
+        customer_id=customer_db.id,
+        status=plan_status,
+    )
 
     session.add(customer_plan_db)
     session.commit()
@@ -81,9 +91,17 @@ async def subscribe_customer_to_plan(customer_id: int, plan_id: int, session: Se
 
 
 @router.get("/customers/{customer_id}/plans", tags=["Customers"])
-async def subscribe_customer_to_plan(customer_id: int, session: SessionDep):
+async def subscribe_customer_to_plan(
+        customer_id: int,
+        session: SessionDep,
+        plan_status: StatusEnum = Query()
+):
     customer_db = session.get(Customer, customer_id)
     if not customer_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer doesn't exits")
 
-    return customer_db.plans
+    query = (select(CustomerPlan).where(CustomerPlan.customer_id == customer_id)
+             .where(CustomerPlan.status == plan_status))
+    plans = session.exec(query).all()
+
+    return plans

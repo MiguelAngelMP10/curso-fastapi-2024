@@ -2,12 +2,12 @@ from fastapi import FastAPI
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from pydantic import  AnyUrl
-from models import  Transaction, Invoice
+from pydantic import AnyUrl
+from models import Transaction, Invoice
 from db import create_all_tables
 from fastapi.openapi.models import Contact, License
 
-from .routers import customers,transactions, plans
+from .routers import customers, transactions, plans
 
 app = FastAPI(
     title="Mi API de Curso de FastAPI",
@@ -20,9 +20,9 @@ app = FastAPI(
     lifespan=create_all_tables,
 )
 
-app.include_router(customers.router)
-app.include_router(transactions.router)
-app.include_router(plans.router)
+app.include_router(customers.router, prefix="/api/v1")
+app.include_router(transactions.router, prefix="/api/v1")
+app.include_router(plans.router, prefix="/api/v1")
 
 countries = {
     "MX": {"iso_code": "MX", "time_zone": "America/Mexico_City"},
@@ -87,8 +87,6 @@ async def time(iso_code: str):
 
     hour_actually = datetime.now(ZoneInfo(time_zone)).strftime("%Y-%m-%d %H:%M:%S")
     return {"time": hour_actually}
-
-
 
 
 @app.post('/invoices')
