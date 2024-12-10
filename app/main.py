@@ -15,7 +15,10 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",  # URL donde estará la documentación Swagger
     redoc_url="/redoc",  # URL donde estará la documentación ReDoc
-    contact=Contact(name="Miguel Ángel Muñoz Pozos", email="mmunozpozos@gmail.com"),
+    contact={
+        "name": "Miguel Ángel Muñoz Pozos",
+        "email": "mmunozpozos@gmail.com"
+    },
     license=License(name="MIT", url=AnyUrl("https://opensource.org/licenses/MIT")),
     lifespan=create_all_tables,
 )
