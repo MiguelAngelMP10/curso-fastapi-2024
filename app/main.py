@@ -7,7 +7,7 @@ from models import  Transaction, Invoice
 from db import create_all_tables
 from fastapi.openapi.models import Contact, License
 
-from .routers import customers,transactions
+from .routers import customers,transactions, plans
 
 app = FastAPI(
     title="Mi API de Curso de FastAPI",
@@ -22,6 +22,7 @@ app = FastAPI(
 
 app.include_router(customers.router)
 app.include_router(transactions.router)
+app.include_router(plans.router)
 
 countries = {
     "MX": {"iso_code": "MX", "time_zone": "America/Mexico_City"},
