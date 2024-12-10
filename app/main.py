@@ -7,11 +7,11 @@ from models import  Transaction, Invoice
 from db import create_all_tables
 from fastapi.openapi.models import Contact, License
 
-from .routers import customers
+from .routers import customers,transactions
 
 app = FastAPI(
-    title="Mi API de Ejemplo",
-    description="Esta es una API de ejemplo construida con FastAPI",
+    title="Mi API de Curso de FastAPI",
+    description="Esta es una API de Curso de FastAPI",
     version="1.0.0",
     docs_url="/docs",  # URL donde estará la documentación Swagger
     redoc_url="/redoc",  # URL donde estará la documentación ReDoc
@@ -21,6 +21,7 @@ app = FastAPI(
 )
 
 app.include_router(customers.router)
+app.include_router(transactions.router)
 
 countries = {
     "MX": {"iso_code": "MX", "time_zone": "America/Mexico_City"},
@@ -87,10 +88,6 @@ async def time(iso_code: str):
     return {"time": hour_actually}
 
 
-
-@app.post('/transactions')
-async def create_transaction(transaction_data: Transaction):
-    return transaction_data
 
 
 @app.post('/invoices')

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from sqlmodel import SQLModel, Field
+from sqlalchemy import ForeignKey
+from sqlmodel import SQLModel, Field, Relationship
 
 
 class CustomerBase(SQLModel):
@@ -19,12 +20,20 @@ class CustomerUpdate(CustomerBase):
 
 class Customer(CustomerBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    transactions: list["Transaction"] = Relationship(back_populates="customer")
 
-
-class Transaction(BaseModel):
-    id: int | None = Field(default=None, primary_key=True)
-    amount: int
+class TransactionBase(SQLModel):
+    amount: int = Field(default=None)
     description: str | None = Field(default=None)
+
+class Transaction(TransactionBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    customer_id: int = Field(foreign_key="customer.id")
+    customer: Customer = Relationship(back_populates="transactions")
+
+
+class TransactionCreate(TransactionBase):
+    customer_id: int = Field(foreign_key="customer.id")
 
 
 class Invoice(BaseModel):
