@@ -1,11 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
+import time
 from pydantic import AnyUrl
 from models import Transaction, Invoice
 from db import create_all_tables
-from fastapi.openapi.models import Contact, License
+from fastapi.openapi.models import License
 
 from .routers import customers, transactions, plans
 
@@ -71,19 +71,40 @@ countries = {
 }
 
 
+@app.middleware("http")
+async def log_request_time(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    print(f"Request: {request.url} completed in: {process_time:.4f} seconds")
+
+    return response
+
+
+@app.middleware("http")
+async def log_request_headers(request: Request, call_next):
+    print("Request Headers:")
+    for header, value in request.headers.items():
+        print(f"{header}: {value}")
+
+    response = await call_next(request)
+
+    return response
+
+
 @app.get("/")
 async def root():
     return {"messege": "Hola, Mundo!"}
 
 
 @app.get("/time")
-async def time():
+async def get_time():
     hour_actually = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return {"time": hour_actually}
 
 
 @app.get("/time/{iso_code}")
-async def time(iso_code: str):
+async def get_time_by_iso_code(iso_code: str):
     country_code = iso_code.upper()
     iso_code = countries[country_code]["iso_code"]
     time_zone = countries[country_code]["time_zone"]
