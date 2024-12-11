@@ -1,8 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, status
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import time
+from typing import Annotated
+
 from pydantic import AnyUrl
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
 from models import Transaction, Invoice
 from db import create_all_tables
 from fastapi.openapi.models import License
@@ -92,9 +96,17 @@ async def log_request_headers(request: Request, call_next):
     return response
 
 
+security = HTTPBasic()
+
+
 @app.get("/")
-async def root():
-    return {"messege": "Hola, Mundo!"}
+async def root(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
+    if credentials.username == 'test' and credentials.password == 'password':
+        return {"message": f"Hello, {credentials.username}!"}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
 
 
 @app.get("/time")
